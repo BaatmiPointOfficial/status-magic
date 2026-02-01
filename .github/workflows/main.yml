@@ -1,31 +1,44 @@
 name: Auto Update Videos
+
 on:
+  workflow_dispatch: # इसे आप हाथ से (Manually) चला सकेंगे
   schedule:
-    - cron: '0 0 * * *' # हर रोज़ रात 12 बजे खुद चलेगा
-  workflow_dispatch: # बटन दबाकर खुद चलाने के लिए
+    - cron: '0 */6 * * *' # यह हर 6 घंटे में अपने आप भी चलेगा
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # GitHub को फाइल अपडेट करने की इजाज़त देना
+    permissions:
+      contents: write
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-python-version: '3.9'
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install cloudinary
+
       - name: Run automation script
         env:
+          # यहाँ हम आपके GitHub Secrets को कोड से जोड़ रहे हैं
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
         run: python automation.py
-      - name: Commit changes
+
+      - name: Commit and push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add videos.json
-          git commit -m "Update videos" || exit 0
-          git push
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update videos.json" && git push)
           
