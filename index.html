@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatusMagic ✨</title>
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #070b14; color: white; text-align: center; }
+        .video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; }
+        .video-card { background: #1e293b; aspect-ratio: 9/16; border-radius: 12px; overflow: hidden; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .title { position: absolute; bottom: 8px; left: 8px; font-size: 11px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2 style="color: #22c55e; padding-top: 20px;">StatusMagic ✨</h2>
+    <div id="grid" class="video-grid">वीडियो लोड हो रहे हैं...</div>
+    <script>
+        fetch('videos.json').then(res => res.json()).then(data => {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = "";
+            data.forEach(item => {
+                grid.innerHTML += `<div class="video-card"><video loop playsinline onclick="this.paused ? this.play() : this.pause()"><source src="${item.url}" type="video/mp4"></video><div class="title">${item.title}</div></div>`;
+            });
+        }).catch(() => document.getElementById('grid').innerHTML = "अभी कोई वीडियो नहीं है, कृपया Actions चलाएं।");
+    </script>
+</body>
+</html>
+
