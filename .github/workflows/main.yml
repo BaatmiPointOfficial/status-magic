@@ -1,15 +1,14 @@
 name: Auto Update Videos
 
 on:
-  workflow_dispatch: # इसे आप हाथ से (Manually) चला सकेंगे
+  workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *' # यह हर 6 घंटे में अपने आप भी चलेगा
+    - cron: '0 */6 * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     
-    # GitHub को फाइल अपडेट करने की इजाज़त देना
     permissions:
       contents: write
 
@@ -20,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-python-version: '3.9'
+          python-version: '3.9' # यहाँ सुधार किया गया है
 
       - name: Install dependencies
         run: |
@@ -29,7 +28,6 @@ jobs:
 
       - name: Run automation script
         env:
-          # यहाँ हम आपके GitHub Secrets को कोड से जोड़ रहे हैं
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
