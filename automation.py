@@ -12,7 +12,6 @@ cloudinary.config(
     api_secret=os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-# आपकी धांसू कैटेगरीज़
 CATEGORIES = {
     "Life_Lessons": "deep life lesson movie scenes hindi shorts",
     "Motivational": "best motivational status clips hindi",
@@ -23,48 +22,48 @@ CATEGORIES = {
 }
 
 def fetch_from_youtube():
-    """YouTube से नए वीडियो ढूँढकर अपलोड करना"""
     print("--- YouTube से नया माल (Content) ला रहा हूँ ---")
     for folder, query in CATEGORIES.items():
+        # हमने duration को 90 तक बढ़ाया है ताकि वीडियो आसानी से मिलें
         cmd = [
             'yt-dlp', f"ytsearch1:{query}", 
             '--format', 'best[ext=mp4]', 
-            '--max-filesize', '15M', 
-            '--match-filter', 'duration < 65', 
+            '--match-filter', 'duration < 90', 
             '--output', 'temp_status.mp4', '--no-playlist'
         ]
         try:
             subprocess.run(cmd, check=True)
-            # सही फोल्डर में अपलोड करना
-            cloudinary.uploader.upload(
-                "temp_status.mp4", 
-                resource_type="video", 
-                folder=f"StatusMagic/{folder}",
-                tags=[folder, "auto_youtube"]
-            )
-            print(f"✅ {folder} का वीडियो अपलोड हुआ।")
+            
+            # सबसे ज़रूरी सुधार: पहले चेक करो कि फाइल बनी भी है या नहीं
             if os.path.exists("temp_status.mp4"):
+                cloudinary.uploader.upload(
+                    "temp_status.mp4", 
+                    resource_type="video", 
+                    folder=f"StatusMagic/{folder}",
+                    tags=[folder, "auto_youtube"]
+                )
+                print(f"✅ {folder} का वीडियो अपलोड हुआ।")
                 os.remove("temp_status.mp4")
+            else:
+                print(f"⚠️ {folder}: कोई वीडियो फिल्टर में फिट नहीं बैठा, स्किप किया।")
+                
         except Exception as e:
             print(f"❌ {folder} में गड़बड़: {e}")
 
 def update_json_list():
-    """Cloudinary से सभी वीडियो की ताज़ा लिस्ट बनाना"""
+    """वेबसाइट के लिए JSON लिस्ट अपडेट करना"""
     print("--- वेबसाइट के लिए JSON लिस्ट अपडेट कर रहा हूँ ---")
     video_list = []
     try:
         response = cloudinary.api.resources(
-            resource_type="video", 
-            type="upload", 
-            max_results=500 
+            resource_type="video", type="upload", max_results=500 
         )
         for asset in response.get('resources', []):
-            if "samples/" not in asset['public_id']: # सैंपल हटाकर
+            if "samples/" not in asset['public_id']:
                 video_list.append({
                     "url": asset['secure_url'],
                     "public_id": asset['public_id']
                 })
-        
         with open('videos.json', 'w') as f:
             json.dump(video_list, f, indent=4)
         print(f"🚀 मिशन पूरा! अब लिस्ट में कुल {len(video_list)} वीडियो हैं।")
@@ -72,5 +71,5 @@ def update_json_list():
         print(f"❌ JSON एरर: {e}")
 
 if __name__ == "__main__":
-    fetch_from_youtube() # पहले नए वीडियो लाओ
-    update_json_list()   # फिर वेबसाइट की लिस्ट अपडेट करो
+    fetch_from_youtube()
+    update_json_list()
