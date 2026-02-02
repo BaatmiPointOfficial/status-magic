@@ -5,14 +5,14 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-# 1. Cloudinary सेटअप
+# 1. Cloudinary सेटअप (GitHub Secrets से चाबियाँ उठाएगा)
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
     api_key=os.environ.get('CLOUDINARY_API_KEY'),
     api_secret=os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-# आपकी सभी कैटेगरीज़
+# 2. आपकी धांसू कैटेगरीज़
 CATEGORIES = {
     "Life_Lessons": "deep life lesson movie scenes hindi shorts",
     "Motivational": "best motivational status clips hindi",
@@ -23,57 +23,65 @@ CATEGORIES = {
 }
 
 def fetch_from_youtube():
-    """YouTube से वीडियो ढूंढकर अपलोड करना"""
+    """YouTube से ट्रेंडिंग वीडियो ढूंढकर अपलोड करना"""
+    print("--- YouTube से माल (Content) खोजना शुरू ---")
     for folder, query in CATEGORIES.items():
-        print(f"चेक कर रहा हूँ: {folder}")
+        print(f"प्रोसेसिंग कैटेगरी: {folder}")
+        
+        # yt-dlp का इस्तेमाल (हर कैटेगरी का 1 सबसे बेस्ट वीडियो)
         cmd = [
-            'yt-dlp', f"ytsearch1:{query}", 
+            'yt-dlp',
+            f"ytsearch1:{query}", 
             '--format', 'best[ext=mp4]', 
             '--max-filesize', '15M', 
             '--match-filter', 'duration < 65', 
-            '--output', 'temp_status.mp4', '--no-playlist'
+            '--output', 'temp_status.mp4',
+            '--no-playlist'
         ]
+        
         try:
             subprocess.run(cmd, check=True)
+            # Cloudinary पर सही फोल्डर में अपलोड करना
             cloudinary.uploader.upload(
                 "temp_status.mp4", 
                 resource_type="video", 
                 folder=f"StatusMagic/{folder}",
                 tags=[folder, "auto_youtube"]
             )
-            os.remove("temp_status.mp4")
             print(f"सफलता: {folder} का नया वीडियो अपलोड हुआ।")
+            if os.path.exists("temp_status.mp4"):
+                os.remove("temp_status.mp4")
         except Exception as e:
-            print(f"स्किप किया ({folder}): {e}")
+            print(f"वीडियो स्किप हुआ ({folder}): {e}")
 
 def update_json_list():
-    """Cloudinary से सभी वीडियो की लिस्ट बनाकर videos.json अपडेट करना"""
-    print("Cloudinary से सभी वीडियो की लिस्ट निकाल रहा हूँ...")
+    """Cloudinary के सभी 66+ वीडियो को videos.json में लाना"""
+    print("--- Cloudinary से पूरी लिस्ट निकालना (JSON Update) ---")
     try:
-        # StatusMagic फोल्डर के सभी वीडियो मँगवाना
+        # हमने सर्च को 'Open' रखा है ताकि आपके सभी 66 वीडियो मिलें
         resources = cloudinary.api.resources(
             resource_type="video", 
             type="upload", 
-            prefix="StatusMagic/", 
-            max_results=500
+            max_results=500 
         )
         
         video_list = []
         for asset in resources.get('resources', []):
-            video_list.append({
-                "url": asset['secure_url'],
-                "public_id": asset['public_id']
-            })
+            # केवल असली वीडियो चुनें, सैंपल वीडियो को छोड़ दें
+            if "samples/" not in asset['public_id']:
+                video_list.append({
+                    "url": asset['secure_url'],
+                    "public_id": asset['public_id']
+                })
         
-        # videos.json फाइल में लिखना
+        # ताज़ा लिस्ट को videos.json फाइल में लिखना
         with open('videos.json', 'w') as f:
             json.dump(video_list, f, indent=4)
         
-        print(f"सफलता! अब videos.json में कुल {len(video_list)} वीडियो हैं।")
+        print(f"बधाई! videos.json अपडेट हो गई। कुल वीडियो: {len(video_list)}")
     except Exception as e:
-        print(f"JSON अपडेट में गड़बड़: {e}")
+        print(f"JSON अपडेट के दौरान गड़बड़: {e}")
 
 if __name__ == "__main__":
-    # पहले नए वीडियो लाओ, फिर पूरी लिस्ट अपडेट करो
-    fetch_from_youtube()
-    update_json_list()
+    fetch_from_youtube() # 1. पहले नए वीडियो लाओ
+    update_json_list()   # 2. फिर पूरी लिस्ट को वेबसाइट के लिए अपडेट करो
