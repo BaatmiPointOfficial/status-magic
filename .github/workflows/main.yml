@@ -1,31 +1,34 @@
-name: Auto Update Videos
+name: StatusMagic Auto Sync
 
+# यह तय करता है कि रोबोट कब चलेगा
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */6 * * *' # हर 6 घंटे में अपने आप चलेगा
+  workflow_dispatch: # GitHub Actions टैब में 'Run workflow' बटन सक्रिय करेगा
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: write
 
     steps:
+      # 1. कोड को GitHub के कंप्यूटर पर लाना
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. पाइथन सेटअप करना
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9' # यहाँ सुधार किया गया है
+          python-version: '3.9'
 
+      # 3. ज़रूरी औज़ार इनस्टॉल करना (Cloudinary और YouTube डैऊनलोडर)
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install cloudinary
+          pip install cloudinary yt-dlp
 
+      # 4. असली रोबोट (Automation Script) चलाना
+      # यहाँ आपकी 'गुप्त चाबियों' (Secrets) को पाइथन कोड से जोड़ा गया है
       - name: Run automation script
         env:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
@@ -33,10 +36,11 @@ jobs:
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
         run: python automation.py
 
+      # 5. अगर कोई बदलाव (जैसे नई videos.json) हुआ है, तो उसे सेव करना
       - name: Commit and push changes
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add videos.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update videos.json" && git push)
-          
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add videos.json || echo "No videos.json to add"
+          git commit -m "Auto-update: New viral clips added" || echo "No changes to commit"
+          git push
