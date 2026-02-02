@@ -1,0 +1,58 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    z-index: 100;
+    font-weight: bold;
+    text-align: center;
+}
+
+.video-feed {
+    height: 100vh;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory; /* स्वाइप इफ़ेक्ट */
+}
+
+.video-card {
+    height: 100vh;
+    width: 100%;
+    scroll-snap-align: start;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+video {
+    width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* वीडियो को स्क्रीन पर फिट करना */
+}
+
+.action-buttons {
+    position: absolute;
+    bottom: 50px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.btn {
+    background: rgba(255,255,255,0.2);
+    padding: 10px;
+    border-radius: 50%;
+    text-decoration: none;
+    color: white;
+    font-size: 20px;
+}
